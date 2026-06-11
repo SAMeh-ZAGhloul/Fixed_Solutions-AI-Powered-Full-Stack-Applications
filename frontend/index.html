@@ -226,14 +226,233 @@
         border-radius: 6px;
         margin-bottom: 12px;
       }
+
+      /* Login screen styles */
+      #login-screen {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #f6f7f9 0%, #e8ecf1 100%);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+      }
+
+      #login-screen.hidden {
+        display: none;
+      }
+
+      .login-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+        width: 400px;
+        max-width: 90vw;
+        text-align: center;
+      }
+
+      .login-card h2 {
+        margin: 0 0 8px 0;
+        font-size: 22px;
+        color: #111827;
+      }
+
+      .login-card p {
+        color: #6b7280;
+        margin: 0 0 28px 0;
+        font-size: 14px;
+      }
+
+      .login-card .logo-icon {
+        font-size: 40px;
+        margin-bottom: 16px;
+      }
+
+      .user-btn {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        padding: 16px 20px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        background: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+        margin-bottom: 12px;
+        font-family: inherit;
+        font-size: 14px;
+      }
+
+      .user-btn:hover {
+        border-color: #0f766e;
+        background: #f0fdfa;
+        box-shadow: 0 2px 8px rgba(15, 118, 110, 0.1);
+      }
+
+      .user-btn .avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: #ffffff;
+        flex-shrink: 0;
+      }
+
+      .user-btn .avatar.admin {
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      }
+
+      .user-btn .avatar.agent {
+        background: linear-gradient(135deg, #0f766e, #0d9488);
+      }
+
+      .user-btn .user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .user-btn .user-info .username {
+        font-weight: 600;
+        color: #111827;
+        font-size: 15px;
+      }
+
+      .user-btn .user-info .role {
+        font-size: 12px;
+        color: #6b7280;
+      }
+
+      .user-btn .role-badge {
+        margin-left: auto;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .user-btn .role-badge.admin {
+        background: #ede9fe;
+        color: #6d28d9;
+      }
+
+      .user-btn .role-badge.agent {
+        background: #ccfbf1;
+        color: #0f766e;
+      }
+
+      /* User info in header */
+      #user-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+      }
+
+      #user-info .header-name {
+        font-weight: 600;
+        color: #111827;
+      }
+
+      #user-info .header-role {
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      #user-info .header-role.admin {
+        background: #ede9fe;
+        color: #6d28d9;
+      }
+
+      #user-info .header-role.agent {
+        background: #ccfbf1;
+        color: #0f766e;
+      }
+
+      #switch-user-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      #switch-user-btn:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
     </style>
   </head>
   <body>
+    <!-- Login Screen -->
+    <div id="login-screen">
+      <div class="login-card">
+        <div class="logo-icon">🤖</div>
+        <h2>AI Customer Support</h2>
+        <p>Select a user to continue</p>
+        <button class="user-btn" id="login-admin-btn" onclick="loginAs('admin')">
+          <div class="avatar admin">👤</div>
+          <div class="user-info">
+            <span class="username">Admin User</span>
+            <span class="role">Full access — manage documents & chat</span>
+          </div>
+          <span class="role-badge admin">Admin</span>
+        </button>
+        <button class="user-btn" id="login-agent-btn" onclick="loginAs('agent')">
+          <div class="avatar agent">💬</div>
+          <div class="user-info">
+            <span class="username">Support Agent</span>
+            <span class="role">Chat & read documents</span>
+          </div>
+          <span class="role-badge agent">Agent</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main App -->
     <header>
-      <h1>AI Customer Support Assistant</h1>
-      <div id="health-badge" class="degraded">
-        <div id="health-dot"></div>
-        <span id="health-text">Connecting</span>
+      <div class="header-left">
+        <h1>AI Customer Support Assistant</h1>
+      </div>
+      <div class="header-right">
+        <div id="user-info" style="display:none;">
+          <span class="header-name" id="header-username"></span>
+          <span class="header-role" id="header-role-badge"></span>
+        </div>
+        <button id="switch-user-btn" style="display:none;" onclick="logout()">Switch User</button>
+        <div id="health-badge" class="degraded">
+          <div id="health-dot"></div>
+          <span id="health-text">Connecting</span>
+        </div>
       </div>
     </header>
     <main>
@@ -263,44 +482,83 @@
       const fileInput = document.getElementById("file-input");
       const errorMessage = document.getElementById("error-message");
       const uploadProgress = document.getElementById("upload-progress");
-      
+      const loginScreen = document.getElementById("login-screen");
+      const userInfo = document.getElementById("user-info");
+      const switchUserBtn = document.getElementById("switch-user-btn");
+      const headerUsername = document.getElementById("header-username");
+      const headerRoleBadge = document.getElementById("header-role-badge");
+
       let sessionToken = "";
       let isAdmin = false;
+      let currentDisplayName = "";
 
       function showError(msg) {
-        errorMessage.innerHTML = `<div class="error">${msg}</div>`;
+        errorMessage.innerHTML = '<div class="error">' + msg + '</div>';
         setTimeout(() => { errorMessage.innerHTML = ""; }, 5000);
       }
 
       function addMessage(text, className, withCitations) {
         const group = document.createElement("div");
         group.className = "message-group";
-        
+
         const element = document.createElement("div");
-        element.className = `message ${className}`;
+        element.className = "message " + className;
         element.textContent = text;
         group.appendChild(element);
-        
+
         if (withCitations) {
-          element.id = `msg-${Date.now()}`;
+          element.id = "msg-" + Date.now();
         }
-        
+
         messages.appendChild(group);
         messages.scrollTop = messages.scrollHeight;
         return { group, element };
       }
 
-      async function login() {
+      function showApp() {
+        loginScreen.classList.add("hidden");
+        userInfo.style.display = "flex";
+        switchUserBtn.style.display = "inline-block";
+        headerUsername.textContent = currentDisplayName;
+        headerRoleBadge.textContent = isAdmin ? "Admin" : "Agent";
+        headerRoleBadge.className = "header-role " + (isAdmin ? "admin" : "agent");
+
+        // Show/hide upload zone based on role
+        uploadZone.style.display = isAdmin ? "block" : "none";
+
+        queryInput.focus();
+      }
+
+      function logout() {
+        sessionToken = "";
+        isAdmin = false;
+        currentDisplayName = "";
+        loginScreen.classList.remove("hidden");
+        userInfo.style.display = "none";
+        switchUserBtn.style.display = "none";
+        messages.innerHTML = "";
+        fileInput.value = "";
+        uploadProgress.style.display = "none";
+        queryInput.value = "";
+        document.getElementById("error-message").innerHTML = "";
+      }
+
+      async function loginAs(username) {
         try {
           const response = await fetch("/api/v1/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: "agent" })
+            body: JSON.stringify({ username: username })
           });
           if (response.ok) {
             const data = await response.json();
             sessionToken = data.session_token;
             isAdmin = data.role === "admin";
+            currentDisplayName = data.display_name;
+            showApp();
+          } else {
+            const errData = await response.json();
+            showError(errData.detail || "Login failed");
           }
         } catch (e) {
           showError("Login failed: " + e.message);
@@ -323,16 +581,16 @@
 
       // File upload
       uploadZone.addEventListener("click", () => fileInput.click());
-      
+
       uploadZone.addEventListener("dragover", (e) => {
         e.preventDefault();
         uploadZone.classList.add("drag-over");
       });
-      
+
       uploadZone.addEventListener("dragleave", () => {
         uploadZone.classList.remove("drag-over");
       });
-      
+
       uploadZone.addEventListener("drop", (e) => {
         e.preventDefault();
         uploadZone.classList.remove("drag-over");
@@ -341,32 +599,32 @@
           uploadFile();
         }
       });
-      
+
       fileInput.addEventListener("change", uploadFile);
-      
+
       async function uploadFile() {
         if (!fileInput.files.length || !isAdmin) {
           showError("You must be an admin to upload documents");
           return;
         }
-        
+
         const file = fileInput.files[0];
         const formData = new FormData();
         formData.append("file", file);
-        
+
         uploadProgress.style.display = "block";
         uploadProgress.textContent = "Uploading...";
-        
+
         try {
           const response = await fetch("/api/v1/documents/upload", {
             method: "POST",
-            headers: { "Authorization": `Bearer ${sessionToken}` },
+            headers: { "Authorization": "Bearer " + sessionToken },
             body: formData
           });
-          
+
           if (response.ok) {
             const data = await response.json();
-            uploadProgress.textContent = `✓ Uploaded: ${data.filename} (${data.chunk_count} chunks)`;
+            uploadProgress.textContent = "\u2713 Uploaded: " + data.filename + " (" + data.chunk_count + " chunks)";
             fileInput.value = "";
             setTimeout(() => { uploadProgress.style.display = "none"; }, 3000);
           } else {
@@ -383,44 +641,44 @@
         event.preventDefault();
         const query = queryInput.value.trim();
         if (!query || !sessionToken) return;
-        
+
         queryInput.value = "";
         sendBtn.disabled = true;
         addMessage(query, "user", false);
-        
+
         const { element: assistant } = addMessage("", "assistant", true);
         const citationsContainer = document.createElement("div");
         citationsContainer.className = "citations";
         assistant.parentElement.appendChild(citationsContainer);
-        
+
         try {
           const response = await fetch("/api/v1/chat", {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${sessionToken}`,
+              "Authorization": "Bearer " + sessionToken,
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              query,
+              query: query,
               session_id: sessionToken,
               conversation_id: null
             })
           });
-          
+
           if (!response.ok) throw new Error("Chat request failed");
-          
+
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
           let buffer = "";
-          
+
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            
+
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split("\n\n");
             buffer = lines.pop() || "";
-            
+
             for (const frame of lines) {
               if (frame.startsWith("event: token")) {
                 const dataLine = frame.split("\n").find((l) => l.startsWith("data: "));
@@ -437,7 +695,7 @@
                     citationsContainer.innerHTML = "<strong>Sources:</strong><ul>";
                     for (const cit of citations) {
                       const li = document.createElement("li");
-                      li.textContent = `${cit.source_name}${cit.page_number ? ` (page ${cit.page_number})` : ""}`;
+                      li.textContent = cit.source_name + (cit.page_number ? " (page " + cit.page_number + ")" : "");
                       citationsContainer.querySelector("ul").appendChild(li);
                     }
                     citationsContainer.innerHTML += "</ul>";
@@ -449,12 +707,11 @@
         } catch (e) {
           assistant.textContent = "Error: " + e.message;
         }
-        
+
         sendBtn.disabled = false;
         queryInput.focus();
       });
 
-      login();
       checkHealth();
       setInterval(checkHealth, 30000);
     </script>
