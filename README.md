@@ -2,6 +2,86 @@
 
 A locally-deployed, RAG-powered chat application with document ingestion, vector search, and LLM streaming support.
 
+---
+
+## 🎯 Workshop Objective: Spec-Driven Design for AI-Assisted Development
+
+This project serves as a hands-on workshop demonstrating **Spec-Driven Design (SDD)** — a structured methodology that transforms a raw project idea into a complete, implementation-ready documentation package *before* writing any code, and then uses those specifications to drive AI coding assistants with precision and consistency.
+
+### What is Spec-Driven Design?
+
+Spec-Driven Design is a **7-phase, role-stacked methodology** that eliminates the most common failure mode in AI-assisted development: *asking an AI coding assistant to build something without first telling it exactly what to build*. Instead of vague prompts like "build me a chat app with RAG," SDD produces **9 interconnected specification artifacts** that collectively define every aspect of the system — from business requirements to security controls to deployment topology.
+
+The core principle: **No architecture before requirements. No code before architecture. No deployment without security.**
+
+### The 7-Phase Pipeline
+
+```
+Phase 1: Discovery        →  Interactive Q&A (requirements, architecture decisions)
+Phase 2: BRD              →  Business Requirements Document
+Phase 3: Architecture Q&A →  Interactive technical decisions
+Phase 4: System Design    →  6 design artifacts (architecture, DB, API, security, DevOps, testing)
+Phase 5: Execution Plan   →  Milestones, epics, features, tasks, critical path
+Phase 6: AI Prompt        →  Implementation prompt optimized for AI coding assistants
+Phase 7: Management       →  Living document consistency across all artifacts
+```
+
+Each phase is **gated** — it cannot begin until the previous phase is complete and approved. This ensures downstream artifacts are always grounded in validated upstream decisions.
+
+### The 9 Specification Artifacts
+
+All artifacts live in the [`artifacts/`](artifacts/) directory:
+
+| # | Artifact | Purpose |
+|---|----------|---------|
+| 1 | [Requirements](artifacts/1-Requirements.md) | Captured functional & non-functional requirements |
+| 2 | [BRD](artifacts/BRD.md) | Business Requirements Document — scope, personas, acceptance criteria, risks |
+| 3 | [System Architecture](artifacts/SystemArchitecture.md) | Context, container, component, deployment, and data flow diagrams |
+| 4 | [Database Design](artifacts/DatabaseDesign.md) | ERD, schema definitions, index strategy |
+| 5 | [API Specification](artifacts/API_Specification.md) | All endpoints, request/response schemas, error codes |
+| 6 | [Security Design](artifacts/SecurityDesign.md) | STRIDE threat model, input sanitization, prompt boundaries |
+| 7 | [DevOps Design](artifacts/DevOpsDesign.md) | Repository structure, CI/CD, Makefile, deployment |
+| 8 | [Test Strategy](artifacts/TestStrategy.md) | Unit, integration, E2E, security test plans |
+| 9 | [Execution Plan](artifacts/ExecutionPlan.md) | Milestones, epics, features, critical path, resource estimates |
+
+Additionally:
+- [Master Prompt](artifacts/2-MasterPrompt.md) — The SDD methodology itself (the meta-prompt that generates all artifacts)
+- [AI Implementation Prompt](artifacts/AI_Implementation_Prompt.md) — The final artifact: a coding-assistant-ready prompt that references all design docs
+
+### Why Spec-Driven Design Matters for AI Development
+
+| Problem Without SDD | How SDD Solves It |
+|---------------------|-------------------|
+| AI invents its own architecture | Artifacts define architecture boundaries explicitly |
+| Security is an afterthought | `SecurityDesign.md` is generated in Phase 4 — *before* code |
+| Inconsistent outputs across AI sessions | The AI Implementation Prompt pins the AI to artifact-specific decisions |
+| "Garbage in, garbage out" | Phases 1 & 3 use *interactive discovery* — questions, not assumptions |
+| No traceability from requirement to code | Execution Plan maps every feature back to BRD requirements |
+| AI hallucinates missing features | AI Implementation Prompt instructs: *"When uncertain, say 'this is not specified in the artifacts'"* |
+
+### How This Workshop Demonstrates SDD
+
+This repository is the **working output** of applying Spec-Driven Design to an AI Customer Support Assistant:
+
+1. **The 7-phase pipeline was executed** — generating all 9 artifacts in the `artifacts/` directory
+2. **The AI Implementation Prompt** (`artifacts/AI_Implementation_Prompt.md`) was then fed to an AI coding assistant (Cline/Cursor/Claude Code)
+3. **The assistant implemented the system phase-by-phase**, referencing artifacts for every architectural decision, security control, and API contract
+4. **Validation gates** ensured each phase was complete before moving to the next
+
+The result: a production-quality RAG application where every line of code traces back to a specification decision — not an AI guess.
+
+### Workshop Takeaways
+
+- **Specifications are prompts** — well-structured artifacts become the most powerful prompts you can give an AI
+- **Discovery before design** — interactive Q&A phases prevent the #1 failure mode (wrong assumptions)
+- **Security by specification** — specifying security controls before code means they're implemented correctly
+- **AI needs constraints** — role injection, architecture boundaries, and validation gates make AI assistants dramatically more reliable
+- **Living documents** — when one artifact changes, all impacted artifacts must be updated (Phase 7)
+
+> 📖 For the full SDD methodology, see [`artifacts/2-MasterPrompt.md`](artifacts/2-MasterPrompt.md).
+
+---
+
 ## ✨ Status: Phases 1-4 Complete | Phase 5 Partial
 
 - ✅ Phase 1: Foundation (config, auth, FastAPI app, logging, health checks)
