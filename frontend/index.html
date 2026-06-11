@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Customer Support Assistant</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f6f7f9;
+        color: #111827;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-bottom: 1px solid #d9dee7;
+        background: #ffffff;
+      }
+
+      h1 {
+        font-size: 18px;
+        margin: 0;
+        font-weight: 650;
+      }
+
+      main {
+        width: min(920px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 20px 0;
+      }
+
+      #messages {
+        display: grid;
+        gap: 12px;
+      }
+
+      .message {
+        max-width: 76%;
+        padding: 12px 14px;
+        border: 1px solid #d9dee7;
+        background: #ffffff;
+        border-radius: 8px;
+        white-space: pre-wrap;
+      }
+
+      .user {
+        justify-self: end;
+        background: #143d59;
+        color: #ffffff;
+        border-color: #143d59;
+      }
+
+      footer {
+        border-top: 1px solid #d9dee7;
+        background: #ffffff;
+        padding: 14px 20px;
+      }
+
+      form {
+        width: min(920px, calc(100vw - 32px));
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+      }
+
+      input {
+        min-width: 0;
+        border: 1px solid #aab3c2;
+        border-radius: 6px;
+        padding: 12px;
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+        border-radius: 6px;
+        padding: 0 16px;
+        font: inherit;
+        background: #0f766e;
+        color: #ffffff;
+        cursor: pointer;
+      }
+
+      #health {
+        font-size: 13px;
+        color: #0f766e;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>AI Customer Support Assistant</h1>
+      <span id="health">Checking</span>
+    </header>
+    <main>
+      <section id="messages" aria-live="polite"></section>
+    </main>
+    <footer>
+      <form id="chat-form">
+        <input id="query" name="query" autocomplete="off" placeholder="Ask a support question" required>
+        <button type="submit">Send</button>
+      </form>
+    </footer>
+    <script>
+      const messages = document.querySelector("#messages");
+      const form = document.querySelector("#chat-form");
+      const queryInput = document.querySelector("#query");
+      const health = document.querySelector("#health");
+      let sessionToken = "";
+
+      function addMessage(text, className) {
+        const element = document.createElement("div");
+        element.className = `message ${className}`;
+        element.textContent = text;
+        messages.appendChild(element);
+        return element;
+      }
+
+      async function login() {
+        const response = await fetch("/api/v1/auth/login", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({username: "agent"})
+        });
+        if (response.ok) {
+          const data = await response.json();
+          sessionToken = data.session_token;
+        }
+      }
+
+      async function checkHealth() {
+        const response = await fetch("/api/v1/health");
+        health.textContent = response.ok ? "Health ok" : "Health degraded";
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const query = queryInput.value.trim();
+        if (!query || !sessionToken) return;
+        queryInput.value = "";
+        addMessage(query, "user");
+        const assistant = addMessage("", "assistant");
+        const response = await fetch("/api/v1/chat", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${sessionToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({query, session_id: sessionToken, conversation_id: null})
+        });
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        while (true) {
+          const {done, value} = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value);
+          for (const frame of chunk.split("\n\n")) {
+            if (!frame.includes("event: token")) continue;
+            const dataLine = frame.split("\n").find((line) => line.startsWith("data: "));
+            if (dataLine) assistant.textContent += JSON.parse(dataLine.slice(6)).token;
+          }
+        }
+      });
+
+      login();
+      checkHealth();
+    </script>
+  </body>
+</html>
