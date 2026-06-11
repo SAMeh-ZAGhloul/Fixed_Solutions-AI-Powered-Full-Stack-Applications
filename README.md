@@ -2,13 +2,23 @@
 
 A locally-deployed, RAG-powered chat application with document ingestion, vector search, and LLM streaming support.
 
-## ✨ Status: Phase 3 Complete
+## ✨ Status: Phases 1-4 Complete | Phase 5 Partial
 
 - ✅ Phase 1: Foundation (config, auth, FastAPI app, logging, health checks)
 - ✅ Phase 2: Ingestion Pipeline (document upload, parsing, chunking, ChromaDB indexing)
 - ✅ Phase 3: RAG Query Pipeline (semantic search, LLM streaming, caching)
-- 🚧 Phase 4: Frontend (chat UI, file upload, streaming display) - Fully implemented
-- 📋 Phase 5: Security & Testing - Unit tests passing, security hardened
+- ✅ Phase 4: Frontend (chat UI, file upload, streaming display)
+- 🟡 Phase 5: Security & Testing — Core done (11 unit tests passing, security hardened, 52% coverage)
+
+### Implementation Summary
+
+| Phase | Status | Coverage |
+|-------|--------|----------|
+| Foundation | ✅ Complete | Config, migrations, CORS, rate limiting, logging |
+| Ingestion | ✅ Complete | PDF/TXT/MD parsing, chunking, ChromaDB embedding |
+| RAG Query | ✅ Complete | Semantic search, streaming, caching, injection prevention |
+| Frontend | ✅ Complete | Single-page chat UI, drag-drop upload, SSE streaming |
+| Security & Testing | 🟡 Partial | Unit tests passing, lint clean, integration/E2E scaffolded |
 
 ## Quick Start
 
@@ -245,6 +255,7 @@ Current coverage:
 - ✅ Prompt builder: 100% (context bounding)
 - ✅ Auth service: 100% (session management)
 - ✅ Cache service: 100% (TTL caching)
+- 🟡 Overall: 52% (11 unit tests passing)
 
 ## Performance
 
@@ -327,7 +338,6 @@ app/
   ├─ main.py                   # FastAPI app factory
   ├─ config.py                 # Pydantic settings (.env)
   ├─ logging.py                # Structured logging
-  ├─ models/db_models.py        # SQLAlchemy ORM (optional)
   ├─ routers/
   │  ├─ auth.py               # /auth/login
   │  ├─ chat.py               # /chat (RAG endpoint)
@@ -360,26 +370,42 @@ tests/
 3. **New route**: Test first in `tests/integration/`
 4. **Always**: Run `make lint && make test` before committing
 
-## Roadmap
+## Recommended Enhancements
 
-- [ ] Conversation history UI + persistence
-- [ ] Multi-turn context awareness
-- [ ] Document summarization
-- [ ] PDF table extraction  
-- [ ] Batch processing API
-- [ ] Admin dashboard (user management)
-- [ ] Webhook integrations
-- [ ] Fine-tuning with domain data
+The core RAG application is fully functional. The following enhancements are recommended to move toward production readiness:
 
-## Production Deployment
+### High Priority
+- [ ] **Conversation History Persistence** — Store chat messages in SQLite so conversations survive page reloads and support multi-turn context
+- [ ] **Integration & E2E Tests** — Expand test coverage from 52% to 80%+ with integration tests for the full RAG pipeline (upload → search → chat)
+- [ ] **PostgreSQL + Redis Migration** — Replace SQLite with PostgreSQL for concurrent access and in-memory cache with Redis for distributed caching
+- [ ] **HTTPS / Reverse Proxy** — Deploy behind nginx or Caddy with TLS termination for secure production use
 
-Before deploying:
+### Medium Priority
+- [ ] **Multi-Turn Context Awareness** — Pass prior conversation turns into the LLM prompt for contextual follow-up questions
+- [ ] **Document Summarization** — Auto-generate summaries on upload for quick document overview without full-text retrieval
+- [ ] **Admin Dashboard** — Web UI for user management, document oversight, and usage analytics
+- [ ] **PDF Table Extraction** — Use `pdfplumber` or `camelot` to extract and index tabular data from PDFs
+
+### Low Priority / Future
+- [ ] **Batch Processing API** — Endpoint for bulk document ingestion with async job tracking
+- [ ] **Webhook Integrations** — Connect to ticketing systems (Jira, Zendesk) for automated support routing
+- [ ] **Fine-Tuning with Domain Data** — Train a small model on company-specific Q&A pairs for improved accuracy
+- [ ] **Usage Analytics** — Track query patterns, popular topics, and response quality metrics
+- [ ] **Docker Compose Deployment** — Containerize the full stack (app + llama.cpp + PostgreSQL + Redis) for reproducible deployments
+- [ ] **Model Evaluation Pipeline** — Automated testing of RAG quality with a curated benchmark dataset
+
+### Production Deployment Checklist
+
+Before deploying to production:
+
 1. Set strong `SECRET_KEY` (≥32 bytes random)
 2. Use PostgreSQL + Redis (not SQLite + in-memory)
 3. Run behind HTTPS reverse proxy (nginx/caddy)
-4. Use systemd service or supervisor
-5. Monitor with structured logs
+4. Use systemd service or Docker Compose
+5. Monitor with structured logs + alerting
 6. Set `environment=production` in `.env`
+7. Enable health check monitoring
+8. Set up automated database backups
 
 Example systemd service:
 ```ini
@@ -413,7 +439,3 @@ See `artifacts/` directory for detailed design docs:
 - `SecurityDesign.md` - Threat model + mitigations
 - `API_Specification.md` - OpenAPI spec
 - `TestStrategy.md` - Test plans
-
-make test
-make backup
-```
