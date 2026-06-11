@@ -10,4 +10,5 @@ def test_health_endpoint_returns_components() -> None:
     body = response.json()
     assert "sqlite" in body["components"]
     assert "chromadb" in body["components"]
-    assert "redis" in body["components"]
+    assert "session_store" in body["components"]
+    assert "query_cache" in body["components"]

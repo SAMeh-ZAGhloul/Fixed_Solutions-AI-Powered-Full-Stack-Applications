@@ -13,8 +13,12 @@ run:             ## Start the application
 	uvicorn app.main:app --reload --port 8000
 
 run-llm:         ## Start llama.cpp server
-	./models/llama-server -m models/gemma-4-2b-instruct.gguf \
-	  --port 8080 --ctx-size 4096 -ngl 0
+	llama-server \
+	  --hf-repo unsloth/gemma-4-E2B-it-GGUF \
+	  --model gemma-4-E2B-it-Q4_K_M.gguf \
+	  --cache-ram 2048 \
+	  -ctxcp 2 \
+	  -c 2048
 
 migrate:         ## Apply DB migrations
 	alembic upgrade head

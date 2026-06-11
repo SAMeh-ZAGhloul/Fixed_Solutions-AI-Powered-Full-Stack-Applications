@@ -1,8 +1,4 @@
-import time
-from typing import cast
-
 import chromadb
-import redis.asyncio as redis
 from fastapi import APIRouter
 
 from app.config import get_settings
@@ -38,17 +34,8 @@ async def health() -> HealthResponse:
     except Exception:
         components["chromadb"] = HealthComponent(status="unavailable")
 
-    redis_client = redis.from_url(settings.redis_url, decode_responses=True)
-    start = time.perf_counter()
-    try:
-        await cast("redis.Redis", redis_client).ping()
-        elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
-        components["redis"] = HealthComponent(status="ok", ping_ms=elapsed_ms)
-    except redis.ConnectionError:
-        components["redis"] = HealthComponent(status="unavailable")
-    finally:
-        await redis_client.aclose()
-
+    components["session_store"] = HealthComponent(status="in_memory")
+    components["query_cache"] = HealthComponent(status="in_memory")
     components["llm_local"] = HealthComponent(status="degraded")
     components["llm_cloud"] = HealthComponent(
         status="configured" if settings.openrouter_api_key else "not_configured"

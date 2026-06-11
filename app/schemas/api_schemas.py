@@ -42,10 +42,9 @@ class DocumentListResponse(BaseModel):
 
 class DocumentUploadResponse(BaseModel):
     document_id: str
-    original_name: str
-    file_type: str
+    filename: str
     status: str
-    message: str
+    chunk_count: int
 
 
 class HealthComponent(BaseModel):

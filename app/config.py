@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     environment: str = "local-dev"
     database_url: str = "sqlite+aiosqlite:///./data/app.db"
     alembic_database_url: str = "sqlite:///./data/app.db"
-    redis_url: str = "redis://localhost:6379/0"
     chroma_path: Path = Path("./data/chroma_db")
     upload_dir: Path = Path("./data/uploads")
     secret_key: str = Field(min_length=16, default="change-me-minimum-32-bytes")
@@ -25,7 +24,11 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 52_428_800
     llm_provider: str = "local"
     local_llm_base_url: str = "http://localhost:8080"
-    local_llm_model: str = "gemma-4-2b-instruct"
+    local_llm_hf_repo: str = "unsloth/gemma-4-E2B-it-GGUF"
+    local_llm_model: str = "gemma-4-E2B-it-Q4_K_M.gguf"
+    local_llm_cache_ram_mb: int = 2048
+    local_llm_context_parallel: int = 2
+    local_llm_context_size: int = 2048
     openrouter_api_key: str = ""
     openrouter_model: str = ""
     cors_origins: list[str] = ["http://localhost:8000", "http://127.0.0.1:8000"]

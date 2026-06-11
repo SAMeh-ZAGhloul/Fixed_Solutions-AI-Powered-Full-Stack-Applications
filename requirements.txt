@@ -6,8 +6,8 @@ httpx==0.27.2
 litellm==1.44.15
 pydantic==2.8.2
 pydantic-settings==2.4.0
+pypdf==5.1.0
 python-multipart==0.0.9
-redis==5.0.8
 slowapi==0.1.9
 sqlalchemy==2.0.32
 structlog==24.4.0

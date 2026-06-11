@@ -12,6 +12,10 @@
         color: #111827;
       }
 
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
         min-height: 100vh;
@@ -26,6 +30,7 @@
         padding: 14px 20px;
         border-bottom: 1px solid #d9dee7;
         background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       }
 
       h1 {
@@ -34,37 +39,123 @@
         font-weight: 650;
       }
 
+      #health-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        background: #f0fdf4;
+        color: #166534;
+      }
+
+      #health-badge.degraded {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      #health-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+      }
+
+      #health-badge.degraded #health-dot {
+        background: #eab308;
+      }
+
       main {
         width: min(920px, calc(100vw - 32px));
         margin: 0 auto;
         padding: 20px 0;
+        overflow-y: auto;
       }
 
       #messages {
         display: grid;
-        gap: 12px;
+        gap: 16px;
+        padding: 0;
+      }
+
+      .message-group {
+        display: grid;
+        gap: 8px;
       }
 
       .message {
-        max-width: 76%;
+        max-width: 85%;
         padding: 12px 14px;
         border: 1px solid #d9dee7;
         background: #ffffff;
         border-radius: 8px;
+        word-wrap: break-word;
         white-space: pre-wrap;
+        line-height: 1.5;
       }
 
-      .user {
+      .message.user {
         justify-self: end;
         background: #143d59;
         color: #ffffff;
         border-color: #143d59;
       }
 
+      .message.assistant {
+        justify-self: start;
+      }
+
+      .citations {
+        font-size: 12px;
+        color: #666;
+        padding: 10px 0;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 8px;
+      }
+
+      .citation-item {
+        padding: 4px 0;
+      }
+
+      .citation-label {
+        font-weight: 600;
+        color: #333;
+      }
+
+      #upload-zone {
+        border: 2px dashed #d9dee7;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        background: #fafbfc;
+        transition: all 0.2s;
+        margin-bottom: 16px;
+      }
+
+      #upload-zone.drag-over {
+        border-color: #0f766e;
+        background: #f0fdfa;
+      }
+
+      #upload-zone-text {
+        color: #666;
+        font-size: 14px;
+      }
+
+      #upload-progress {
+        display: none;
+        margin-top: 10px;
+        font-size: 12px;
+        color: #666;
+      }
+
       footer {
         border-top: 1px solid #d9dee7;
         background: #ffffff;
         padding: 14px 20px;
+        box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
       }
 
       form {
@@ -75,12 +166,19 @@
         gap: 10px;
       }
 
-      input {
+      input, textarea {
         min-width: 0;
         border: 1px solid #aab3c2;
         border-radius: 6px;
         padding: 12px;
         font: inherit;
+        font-size: 14px;
+      }
+
+      input:focus, textarea:focus {
+        outline: none;
+        border-color: #0f766e;
+        box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
       }
 
       button {
@@ -91,91 +189,274 @@
         background: #0f766e;
         color: #ffffff;
         cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
       }
 
-      #health {
-        font-size: 13px;
-        color: #0f766e;
+      button:hover:not(:disabled) {
+        background: #0d5d54;
+      }
+
+      button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 4px;
+        height: 4px;
+        background: #666;
+        border-radius: 50%;
+        animation: bounce 1.4s infinite;
+        margin-left: 4px;
+      }
+
+      @keyframes bounce {
+        0%, 80%, 100% { opacity: 0.3; }
+        40% { opacity: 1; }
+      }
+
+      .error {
+        background: #fee;
+        border: 1px solid #fcc;
+        color: #c33;
+        padding: 12px 14px;
+        border-radius: 6px;
+        margin-bottom: 12px;
       }
     </style>
   </head>
   <body>
     <header>
       <h1>AI Customer Support Assistant</h1>
-      <span id="health">Checking</span>
+      <div id="health-badge" class="degraded">
+        <div id="health-dot"></div>
+        <span id="health-text">Connecting</span>
+      </div>
     </header>
     <main>
+      <div id="error-message"></div>
+      <div id="upload-zone">
+        <input type="file" id="file-input" style="display: none" accept=".pdf,.txt,.md">
+        <div id="upload-zone-text">📁 Drag & drop documents (PDF, TXT, MD) or click to upload</div>
+        <div id="upload-progress"></div>
+      </div>
       <section id="messages" aria-live="polite"></section>
     </main>
     <footer>
       <form id="chat-form">
         <input id="query" name="query" autocomplete="off" placeholder="Ask a support question" required>
-        <button type="submit">Send</button>
+        <button type="submit" id="send-btn">Send</button>
       </form>
     </footer>
-    <script>
-      const messages = document.querySelector("#messages");
-      const form = document.querySelector("#chat-form");
-      const queryInput = document.querySelector("#query");
-      const health = document.querySelector("#health");
-      let sessionToken = "";
 
-      function addMessage(text, className) {
+    <script>
+      const messages = document.getElementById("messages");
+      const form = document.getElementById("chat-form");
+      const queryInput = document.getElementById("query");
+      const sendBtn = document.getElementById("send-btn");
+      const healthBadge = document.getElementById("health-badge");
+      const healthText = document.getElementById("health-text");
+      const uploadZone = document.getElementById("upload-zone");
+      const fileInput = document.getElementById("file-input");
+      const errorMessage = document.getElementById("error-message");
+      const uploadProgress = document.getElementById("upload-progress");
+      
+      let sessionToken = "";
+      let isAdmin = false;
+
+      function showError(msg) {
+        errorMessage.innerHTML = `<div class="error">${msg}</div>`;
+        setTimeout(() => { errorMessage.innerHTML = ""; }, 5000);
+      }
+
+      function addMessage(text, className, withCitations) {
+        const group = document.createElement("div");
+        group.className = "message-group";
+        
         const element = document.createElement("div");
         element.className = `message ${className}`;
         element.textContent = text;
-        messages.appendChild(element);
-        return element;
+        group.appendChild(element);
+        
+        if (withCitations) {
+          element.id = `msg-${Date.now()}`;
+        }
+        
+        messages.appendChild(group);
+        messages.scrollTop = messages.scrollHeight;
+        return { group, element };
       }
 
       async function login() {
-        const response = await fetch("/api/v1/auth/login", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({username: "agent"})
-        });
-        if (response.ok) {
-          const data = await response.json();
-          sessionToken = data.session_token;
+        try {
+          const response = await fetch("/api/v1/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: "agent" })
+          });
+          if (response.ok) {
+            const data = await response.json();
+            sessionToken = data.session_token;
+            isAdmin = data.role === "admin";
+          }
+        } catch (e) {
+          showError("Login failed: " + e.message);
         }
       }
 
       async function checkHealth() {
-        const response = await fetch("/api/v1/health");
-        health.textContent = response.ok ? "Health ok" : "Health degraded";
+        try {
+          const response = await fetch("/api/v1/health");
+          if (response.ok) {
+            const data = await response.json();
+            healthText.textContent = data.status === "ok" ? "All systems ok" : "Degraded";
+            healthBadge.classList.toggle("degraded", data.status !== "ok");
+          }
+        } catch {
+          healthText.textContent = "Offline";
+          healthBadge.classList.add("degraded");
+        }
+      }
+
+      // File upload
+      uploadZone.addEventListener("click", () => fileInput.click());
+      
+      uploadZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadZone.classList.add("drag-over");
+      });
+      
+      uploadZone.addEventListener("dragleave", () => {
+        uploadZone.classList.remove("drag-over");
+      });
+      
+      uploadZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove("drag-over");
+        if (e.dataTransfer.files.length > 0) {
+          fileInput.files = e.dataTransfer.files;
+          uploadFile();
+        }
+      });
+      
+      fileInput.addEventListener("change", uploadFile);
+      
+      async function uploadFile() {
+        if (!fileInput.files.length || !isAdmin) {
+          showError("You must be an admin to upload documents");
+          return;
+        }
+        
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        uploadProgress.style.display = "block";
+        uploadProgress.textContent = "Uploading...";
+        
+        try {
+          const response = await fetch("/api/v1/documents/upload", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${sessionToken}` },
+            body: formData
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            uploadProgress.textContent = `✓ Uploaded: ${data.filename} (${data.chunk_count} chunks)`;
+            fileInput.value = "";
+            setTimeout(() => { uploadProgress.style.display = "none"; }, 3000);
+          } else {
+            const data = await response.json();
+            throw new Error(data.detail || "Upload failed");
+          }
+        } catch (e) {
+          showError("Upload error: " + e.message);
+          uploadProgress.style.display = "none";
+        }
       }
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const query = queryInput.value.trim();
         if (!query || !sessionToken) return;
+        
         queryInput.value = "";
-        addMessage(query, "user");
-        const assistant = addMessage("", "assistant");
-        const response = await fetch("/api/v1/chat", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${sessionToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({query, session_id: sessionToken, conversation_id: null})
-        });
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        while (true) {
-          const {done, value} = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value);
-          for (const frame of chunk.split("\n\n")) {
-            if (!frame.includes("event: token")) continue;
-            const dataLine = frame.split("\n").find((line) => line.startsWith("data: "));
-            if (dataLine) assistant.textContent += JSON.parse(dataLine.slice(6)).token;
+        sendBtn.disabled = true;
+        addMessage(query, "user", false);
+        
+        const { element: assistant } = addMessage("", "assistant", true);
+        const citationsContainer = document.createElement("div");
+        citationsContainer.className = "citations";
+        assistant.parentElement.appendChild(citationsContainer);
+        
+        try {
+          const response = await fetch("/api/v1/chat", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${sessionToken}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              query,
+              session_id: sessionToken,
+              conversation_id: null
+            })
+          });
+          
+          if (!response.ok) throw new Error("Chat request failed");
+          
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n\n");
+            buffer = lines.pop() || "";
+            
+            for (const frame of lines) {
+              if (frame.startsWith("event: token")) {
+                const dataLine = frame.split("\n").find((l) => l.startsWith("data: "));
+                if (dataLine) {
+                  const { token } = JSON.parse(dataLine.slice(6));
+                  assistant.textContent += token;
+                  messages.scrollTop = messages.scrollHeight;
+                }
+              } else if (frame.startsWith("event: citations")) {
+                const dataLine = frame.split("\n").find((l) => l.startsWith("data: "));
+                if (dataLine) {
+                  const { citations } = JSON.parse(dataLine.slice(6));
+                  if (citations.length > 0) {
+                    citationsContainer.innerHTML = "<strong>Sources:</strong><ul>";
+                    for (const cit of citations) {
+                      const li = document.createElement("li");
+                      li.textContent = `${cit.source_name}${cit.page_number ? ` (page ${cit.page_number})` : ""}`;
+                      citationsContainer.querySelector("ul").appendChild(li);
+                    }
+                    citationsContainer.innerHTML += "</ul>";
+                  }
+                }
+              }
+            }
           }
+        } catch (e) {
+          assistant.textContent = "Error: " + e.message;
         }
+        
+        sendBtn.disabled = false;
+        queryInput.focus();
       });
 
       login();
       checkHealth();
+      setInterval(checkHealth, 30000);
     </script>
   </body>
 </html>
