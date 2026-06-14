@@ -1,7 +1,5 @@
 # The AI Project Discovery & Spec-Driven Design Master Prompt
 
-## Analysis, Breakdown & Enhancement Suggestions
-
 **Version:** 1.1
 **Date:** June 2026
 
