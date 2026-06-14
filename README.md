@@ -32,32 +32,33 @@ Each phase is **gated** — it cannot begin until the previous phase is complete
 
 All artifacts live in the [`artifacts/`](artifacts/) directory:
 
-| # | Artifact | Purpose |
-|---|----------|---------|
-| 1 | [Requirements](artifacts/1-Requirements.md) | Captured functional & non-functional requirements |
-| 2 | [BRD](artifacts/BRD.md) | Business Requirements Document — scope, personas, acceptance criteria, risks |
-| 3 | [System Architecture](artifacts/SystemArchitecture.md) | Context, container, component, deployment, and data flow diagrams |
-| 4 | [Database Design](artifacts/DatabaseDesign.md) | ERD, schema definitions, index strategy |
-| 5 | [API Specification](artifacts/API_Specification.md) | All endpoints, request/response schemas, error codes |
-| 6 | [Security Design](artifacts/SecurityDesign.md) | STRIDE threat model, input sanitization, prompt boundaries |
-| 7 | [DevOps Design](artifacts/DevOpsDesign.md) | Repository structure, CI/CD, Makefile, deployment |
-| 8 | [Test Strategy](artifacts/TestStrategy.md) | Unit, integration, E2E, security test plans |
-| 9 | [Execution Plan](artifacts/ExecutionPlan.md) | Milestones, epics, features, critical path, resource estimates |
+| # | Artifact                                            | Purpose                                                                       |
+| - | --------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 1 | [Requirements](artifacts/1-Requirements.md)            | Captured functional & non-functional requirements                             |
+| 2 | [BRD](artifacts/BRD.md)                                | Business Requirements Document — scope, personas, acceptance criteria, risks |
+| 3 | [System Architecture](artifacts/SystemArchitecture.md) | Context, container, component, deployment, and data flow diagrams             |
+| 4 | [Database Design](artifacts/DatabaseDesign.md)         | ERD, schema definitions, index strategy                                       |
+| 5 | [API Specification](artifacts/API_Specification.md)    | All endpoints, request/response schemas, error codes                          |
+| 6 | [Security Design](artifacts/SecurityDesign.md)         | STRIDE threat model, input sanitization, prompt boundaries                    |
+| 7 | [DevOps Design](artifacts/DevOpsDesign.md)             | Repository structure, CI/CD, Makefile, deployment                             |
+| 8 | [Test Strategy](artifacts/TestStrategy.md)             | Unit, integration, E2E, security test plans                                   |
+| 9 | [Execution Plan](artifacts/ExecutionPlan.md)           | Milestones, epics, features, critical path, resource estimates                |
 
 Additionally:
+
 - [Master Prompt](artifacts/2-MasterPrompt.md) — The SDD methodology itself (the meta-prompt that generates all artifacts)
 - [AI Implementation Prompt](artifacts/AI_Implementation_Prompt.md) — The final artifact: a coding-assistant-ready prompt that references all design docs
 
 ### Why Spec-Driven Design Matters for AI Development
 
-| Problem Without SDD | How SDD Solves It |
-|---------------------|-------------------|
-| AI invents its own architecture | Artifacts define architecture boundaries explicitly |
-| Security is an afterthought | `SecurityDesign.md` is generated in Phase 4 — *before* code |
-| Inconsistent outputs across AI sessions | The AI Implementation Prompt pins the AI to artifact-specific decisions |
-| "Garbage in, garbage out" | Phases 1 & 3 use *interactive discovery* — questions, not assumptions |
-| No traceability from requirement to code | Execution Plan maps every feature back to BRD requirements |
-| AI hallucinates missing features | AI Implementation Prompt instructs: *"When uncertain, say 'this is not specified in the artifacts'"* |
+| Problem Without SDD                      | How SDD Solves It                                                                                     |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| AI invents its own architecture          | Artifacts define architecture boundaries explicitly                                                   |
+| Security is an afterthought              | `SecurityDesign.md` is generated in Phase 4 — *before* code                                      |
+| Inconsistent outputs across AI sessions  | The AI Implementation Prompt pins the AI to artifact-specific decisions                               |
+| "Garbage in, garbage out"                | Phases 1 & 3 use*interactive discovery* — questions, not assumptions                               |
+| No traceability from requirement to code | Execution Plan maps every feature back to BRD requirements                                            |
+| AI hallucinates missing features         | AI Implementation Prompt instructs:*"When uncertain, say 'this is not specified in the artifacts'"* |
 
 ### How This Workshop Demonstrates SDD
 
@@ -92,17 +93,18 @@ The result: a production-quality RAG application where every line of code traces
 
 ### Implementation Summary
 
-| Phase | Status | Coverage |
-|-------|--------|----------|
-| Foundation | ✅ Complete | Config, migrations, CORS, rate limiting, logging |
-| Ingestion | ✅ Complete | PDF/TXT/MD parsing, chunking, ChromaDB embedding |
-| RAG Query | ✅ Complete | Semantic search, streaming, caching, injection prevention |
-| Frontend | ✅ Complete | Single-page chat UI, drag-drop upload, SSE streaming |
-| Security & Testing | 🟡 Partial | Unit tests passing, lint clean, integration/E2E scaffolded |
+| Phase              | Status      | Coverage                                                   |
+| ------------------ | ----------- | ---------------------------------------------------------- |
+| Foundation         | ✅ Complete | Config, migrations, CORS, rate limiting, logging           |
+| Ingestion          | ✅ Complete | PDF/TXT/MD parsing, chunking, ChromaDB embedding           |
+| RAG Query          | ✅ Complete | Semantic search, streaming, caching, injection prevention  |
+| Frontend           | ✅ Complete | Single-page chat UI, drag-drop upload, SSE streaming       |
+| Security & Testing | 🟡 Partial  | Unit tests passing, lint clean, integration/E2E scaffolded |
 
 ## Quick Start
 
 ### Prerequisites
+
 - Python 3.11+
 - ~2GB RAM (optional, uses OpenRouter fallback)
 
@@ -122,6 +124,7 @@ make run
 ```
 
 ### Demo Login
+
 - Username: `agent` (support agent)
 - Username: `admin` (can upload documents)
 - No password required (demo mode)
@@ -129,6 +132,7 @@ make run
 ## Features Implemented
 
 ### Document Ingestion (Phase 2)
+
 - ✅ Upload PDF, TXT, MD files via browser drag-drop
 - ✅ Auto-parse documents with PyPDF2
 - ✅ Text chunking with configurable overlap (default 500 words, 50-word overlap)
@@ -137,6 +141,7 @@ make run
 - ✅ Batch ingestion script (`scripts/ingest.py`)
 
 ### RAG Query Pipeline (Phase 3)
+
 - ✅ Semantic similarity search with ChromaDB
 - ✅ Top-K retrieval (default 3 most relevant chunks)
 - ✅ Prompt injection protection with SafePrompt template
@@ -147,6 +152,7 @@ make run
 - ✅ Structured logging (all key operations)
 
 ### Frontend (Phase 4)
+
 - ✅ Single-page HTML/CSS/JS (no build step required)
 - ✅ Real-time chat message display
 - ✅ SSE streaming token renderer
@@ -157,6 +163,7 @@ make run
 - ✅ Error handling and loading states
 
 ### Auth & Security
+
 - ✅ Bearer token authentication
 - ✅ Rate limiting (60 requests/minute)
 - ✅ Admin-only document upload
@@ -176,28 +183,31 @@ cp .env.example .env
 
 ### Key Settings
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `LLM_PROVIDER` | `local` | `local` or `openrouter` |
-| `LOCAL_LLM_BASE_URL` | `http://localhost:8080` | llama.cpp server |
-| `OPENROUTER_API_KEY` | `` | Fallback LLM key |
-| `OPENROUTER_MODEL` | `` | e.g., `openai/gpt-4-mini` |
-| `DATABASE_URL` | `sqlite+aiosqlite:///./data/app.db` | SQLite path |
-| `CHROMA_PATH` | `./data/chroma_db` | ChromaDB storage |
+| Variable               | Default                               | Purpose                     |
+| ---------------------- | ------------------------------------- | --------------------------- |
+| `LLM_PROVIDER`       | `local`                             | `local` or `openrouter` |
+| `LOCAL_LLM_BASE_URL` | `http://localhost:8080`             | llama.cpp server            |
+| `OPENROUTER_API_KEY` | ``                                    | Fallback LLM key            |
+| `OPENROUTER_MODEL`   | ``                                    | e.g.,`openai/gpt-4-mini`  |
+| `DATABASE_URL`       | `sqlite+aiosqlite:///./data/app.db` | SQLite path                 |
+| `CHROMA_PATH`        | `./data/chroma_db`                  | ChromaDB storage            |
 
 ## Usage
 
 ### Upload Documents
+
 1. Click the upload zone or drag-drop PDF/TXT/MD files
 2. Wait for indexing (shows chunk count)
 3. Ask questions about the content
 
 ### Ask Questions
+
 1. Type a question in the chat input
 2. Assistant searches relevant document chunks
 3. Response streams with citations
 
 ### Batch Ingest
+
 ```bash
 python scripts/ingest.py --dir data/uploads/
 ```
@@ -267,12 +277,15 @@ If llama.cpp is unavailable, requests fall back to OpenRouter (requires `OPENROU
 ## API Endpoints
 
 ### Health Check
+
 ```bash
 GET /api/v1/health
 ```
+
 Returns component statuses (SQLite, ChromaDB, LLM, Cache).
 
 ### Login
+
 ```bash
 POST /api/v1/auth/login
 Content-Type: application/json
@@ -282,6 +295,7 @@ Content-Type: application/json
 ```
 
 ### Chat (RAG)
+
 ```bash
 POST /api/v1/chat
 Authorization: Bearer <session_token>
@@ -292,6 +306,7 @@ Content-Type: application/json
 ```
 
 ### Upload Document
+
 ```bash
 POST /api/v1/documents/upload
 Authorization: Bearer <admin_token>
@@ -302,6 +317,7 @@ file=<PDF/TXT/MD>
 ```
 
 ### List Documents
+
 ```bash
 GET /api/v1/documents
 Authorization: Bearer <session_token>
@@ -309,6 +325,7 @@ Authorization: Bearer <session_token>
 ```
 
 ### Delete Document
+
 ```bash
 DELETE /api/v1/documents/{document_id}
 Authorization: Bearer <admin_token>
@@ -330,6 +347,7 @@ open htmlcov/index.html
 ```
 
 Current coverage:
+
 - ✅ Sanitizer: 100% (injection prevention)
 - ✅ Chunker: 100% (text splitting)
 - ✅ Prompt builder: 100% (context bounding)
@@ -348,7 +366,9 @@ Current coverage:
 ## Security Hardening
 
 ### Input Sanitization
+
 Regex patterns in `sanitizer.py` filter:
+
 - `ignore previous instructions`
 - `system:` / `=== SYSTEM ===`
 - `[INST]` / `[/INST]` (Llama format)
@@ -356,7 +376,9 @@ Regex patterns in `sanitizer.py` filter:
 - 2000-char truncation
 
 ### Prompt Boundary
+
 User input strictly bounded:
+
 ```
 === CONTEXT START ===
 [retrieved chunks]
@@ -368,6 +390,7 @@ User input strictly bounded:
 ```
 
 ### Auth Enforcement
+
 - All endpoints except `/health` and `/auth/login` require `Authorization: Bearer <token>`
 - Admin-only: `/documents/upload`, `/documents/{id}`
 - Rate limiting: 60 requests/minute per IP
@@ -375,6 +398,7 @@ User input strictly bounded:
 ## Troubleshooting
 
 ### Local LLM not responding
+
 ```bash
 # Check llama.cpp is running
 curl http://localhost:8080/health
@@ -385,6 +409,7 @@ LLM_PROVIDER=openrouter
 ```
 
 ### ChromaDB errors
+
 ```bash
 # Ensure directory exists
 mkdir -p data/chroma_db
@@ -395,6 +420,7 @@ make run  # Will recreate
 ```
 
 ### Database locked
+
 ```bash
 # Ensure only one app instance
 # If persistent:
@@ -403,6 +429,7 @@ make migrate
 ```
 
 ### Dependency conflicts
+
 ```bash
 # Reinstall in clean venv
 python3 -m venv .venv
@@ -413,6 +440,7 @@ make install
 ## Development
 
 ### Code Structure
+
 ```
 app/
   ├─ main.py                   # FastAPI app factory
@@ -455,18 +483,21 @@ tests/
 The core RAG application is fully functional. The following enhancements are recommended to move toward production readiness:
 
 ### High Priority
+
 - [ ] **Conversation History Persistence** — Store chat messages in SQLite so conversations survive page reloads and support multi-turn context
 - [ ] **Integration & E2E Tests** — Expand test coverage from 52% to 80%+ with integration tests for the full RAG pipeline (upload → search → chat)
 - [ ] **PostgreSQL + Redis Migration** — Replace SQLite with PostgreSQL for concurrent access and in-memory cache with Redis for distributed caching
 - [ ] **HTTPS / Reverse Proxy** — Deploy behind nginx or Caddy with TLS termination for secure production use
 
 ### Medium Priority
+
 - [ ] **Multi-Turn Context Awareness** — Pass prior conversation turns into the LLM prompt for contextual follow-up questions
 - [ ] **Document Summarization** — Auto-generate summaries on upload for quick document overview without full-text retrieval
 - [ ] **Admin Dashboard** — Web UI for user management, document oversight, and usage analytics
 - [ ] **PDF Table Extraction** — Use `pdfplumber` or `camelot` to extract and index tabular data from PDFs
 
 ### Low Priority / Future
+
 - [ ] **Batch Processing API** — Endpoint for bulk document ingestion with async job tracking
 - [ ] **Webhook Integrations** — Connect to ticketing systems (Jira, Zendesk) for automated support routing
 - [ ] **Fine-Tuning with Domain Data** — Train a small model on company-specific Q&A pairs for improved accuracy
@@ -488,6 +519,7 @@ Before deploying to production:
 8. Set up automated database backups
 
 Example systemd service:
+
 ```ini
 [Unit]
 Description=AI Support Assistant
@@ -513,6 +545,7 @@ MIT
 ## Support
 
 See `artifacts/` directory for detailed design docs:
+
 - `BRD.md` - Business requirements
 - `SystemArchitecture.md` - Component diagrams
 - `DatabaseDesign.md` - Schema + indexes

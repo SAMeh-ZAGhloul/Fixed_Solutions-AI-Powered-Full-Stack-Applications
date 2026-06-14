@@ -2,7 +2,7 @@
 
 ## Analysis, Breakdown & Enhancement Suggestions
 
-**Version:** 1.1 (Annotated)
+**Version:** 1.1 
 **Date:** June 2026
 
 ---
