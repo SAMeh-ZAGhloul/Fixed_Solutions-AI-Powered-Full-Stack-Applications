@@ -12,6 +12,7 @@ from app.schemas.api_schemas import (
     DocumentUploadResponse,
 )
 from app.services.database import fetch_all, get_db
+from app.services.chroma_client import get_chroma_client
 from app.services.ingest_service import (
     chunk_text,
     parse_document,
@@ -155,11 +156,10 @@ async def delete_document(
 ) -> dict[str, object]:
     """Delete a document and associated vectors."""
     settings = get_settings()
-    import chromadb
     
     try:
         # Delete from ChromaDB
-        client = chromadb.PersistentClient(path=str(settings.chroma_path))
+        client = get_chroma_client(settings.chroma_path)
         try:
             client.delete_collection(name=f"doc_{document_id}")
         except Exception:

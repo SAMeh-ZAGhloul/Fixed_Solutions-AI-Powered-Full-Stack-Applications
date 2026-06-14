@@ -7,6 +7,7 @@ import structlog
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
+from app.config import get_settings
 from app.routers.dependencies import get_current_user
 from app.schemas.api_schemas import ChatRequest, CurrentUser
 from app.services.cache_service import get as cache_get
@@ -97,12 +98,13 @@ async def chat(
         
         # Cache the response
         full_text = "".join(full_response)
+        provider = get_settings().llm_provider
         await cache_set(
             clean_query,
             {
                 "tokens": full_response,
                 "citations": citations,
-                "provider": "local",
+                "provider": provider,
                 "full_response": full_text,
             },
         )
@@ -111,7 +113,7 @@ async def chat(
             "chat.query",
             user_id=current_user.id,
             cache_hit=False,
-            provider="local",
+            provider=provider,
             latency_ms=latency_ms,
             chunk_count=len(chunks),
         )
@@ -122,7 +124,7 @@ async def chat(
                 "message_id": message_id,
                 "latency_ms": latency_ms,
                 "cache_hit": False,
-                "provider": "local",
+                "provider": provider,
             },
         )
 

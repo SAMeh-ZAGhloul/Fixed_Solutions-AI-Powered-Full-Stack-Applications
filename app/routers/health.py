@@ -1,8 +1,8 @@
-import chromadb
 from fastapi import APIRouter
 
 from app.config import get_settings
 from app.schemas.api_schemas import HealthComponent, HealthResponse
+from app.services.chroma_client import get_chroma_client
 from app.services.database import sqlite_healthcheck
 
 router = APIRouter(tags=["health"])
@@ -21,7 +21,7 @@ async def health() -> HealthResponse:
         components["sqlite"] = HealthComponent(status="unavailable")
 
     try:
-        client = chromadb.PersistentClient(path=str(settings.chroma_path))
+        client = get_chroma_client(settings.chroma_path)
         collections = client.list_collections()
         vector_count = 0
         for collection in collections:

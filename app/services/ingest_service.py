@@ -2,11 +2,11 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
-import chromadb
 import structlog
 from pypdf import PdfReader
 
 from app.config import Settings, get_settings
+from app.services.chroma_client import get_chroma_client
 from app.services.database import get_db
 
 logger = structlog.get_logger()
@@ -101,7 +101,7 @@ async def write_to_chroma(
         settings: Application settings (injected for testing).
     """
     active_settings = settings or get_settings()
-    client = chromadb.PersistentClient(path=str(active_settings.chroma_path))
+    client = get_chroma_client(active_settings.chroma_path)
     
     # Get or create collection for this document
     collection = client.get_or_create_collection(

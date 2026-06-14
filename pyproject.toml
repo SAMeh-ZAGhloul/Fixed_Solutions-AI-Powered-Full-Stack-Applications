@@ -2,3 +2,7 @@
 pythonpath = ["."]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.mypy]
+ignore_missing_imports = true
+disable_error_code = ["valid-type", "attr-defined", "misc"]

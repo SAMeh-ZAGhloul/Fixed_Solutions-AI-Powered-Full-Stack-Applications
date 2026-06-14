@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 
-import chromadb
 import structlog
 
-from app.config import get_settings
+from app.services.chroma_client import get_chroma_client
 
 logger = structlog.get_logger()
 
@@ -55,8 +54,7 @@ async def search(query: str, top_k: int = 3, document_id: str | None = None) -> 
     Raises:
         Exception: If ChromaDB is unavailable.
     """
-    settings = get_settings()
-    client = chromadb.PersistentClient(path=str(settings.chroma_path))
+    client = get_chroma_client()
     
     results: list[ChunkResult] = []
     

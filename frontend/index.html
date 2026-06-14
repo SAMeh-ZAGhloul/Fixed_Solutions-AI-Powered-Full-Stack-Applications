@@ -622,6 +622,12 @@
             body: formData
           });
 
+          if (response.status === 401) {
+            handleSessionExpired();
+            uploadProgress.style.display = "none";
+            return;
+          }
+
           if (response.ok) {
             const data = await response.json();
             uploadProgress.textContent = "\u2713 Uploaded: " + data.filename + " (" + data.chunk_count + " chunks)";
@@ -635,6 +641,11 @@
           showError("Upload error: " + e.message);
           uploadProgress.style.display = "none";
         }
+      }
+
+      function handleSessionExpired() {
+        showError("Session expired. Please log in again.");
+        logout();
       }
 
       form.addEventListener("submit", async (event) => {
@@ -664,6 +675,12 @@
               conversation_id: null
             })
           });
+
+          if (response.status === 401) {
+            handleSessionExpired();
+            sendBtn.disabled = false;
+            return;
+          }
 
           if (!response.ok) throw new Error("Chat request failed");
 
