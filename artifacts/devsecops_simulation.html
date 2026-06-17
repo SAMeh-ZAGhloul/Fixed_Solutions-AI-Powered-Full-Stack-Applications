@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevSecOps Pipeline — AI Customer Support Assistant</title>
+<style>
+/* ═══════════════════════════════════════════════════
+   LIGHT THEME — high contrast, large clear typography
+   ═══════════════════════════════════════════════════ */
+:root {
+  /* ── Core surfaces ── */
+  --bg:        #F0F4F8;       /* soft blue-grey page background */
+  --surface:   #FFFFFF;       /* card / panel white */
+  --surface2:  #EEF2F7;       /* inner panel tint */
+  --header-bg: #1E293B;       /* header stays dark for contrast */
+
+  /* ── Semantic colours ── */
+  --green:     #16A34A;       /* pass / success */
+  --green-dim: #DCFCE7;       /* pass chip background */
+  --green-txt: #14532D;       /* pass chip text */
+  --amber:     #D97706;       /* running / warning */
+  --amber-dim: #FEF3C7;       /* running chip background */
+  --amber-txt: #78350F;       /* running chip text */
+  --red:       #DC2626;       /* fail / blocked */
+  --red-dim:   #FEE2E2;       /* fail chip background */
+  --red-txt:   #7F1D1D;       /* fail chip text */
+  --sky:       #0369A1;       /* fixed / info */
+  --sky-dim:   #E0F2FE;       /* fixed chip background */
+  --sky-txt:   #0C4A6E;       /* fixed chip text */
+  --violet:    #7C3AED;       /* replay button / accent */
+
+  /* ── Type ── */
+  --text:      #0F172A;       /* primary — near-black */
+  --muted:     #475569;       /* secondary — slate */
+  --border:    #CBD5E1;       /* dividers */
+  --mono: "Courier New", "Consolas", monospace;
+  --sans: "Segoe UI", "Calibri", "Arial", sans-serif;
+
+  /* ★ ADJUSTABLE — main speed controlled by JS */
+  --tick: 120ms;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ═══════════ HEADER (dark band — keeps branding legible) ═══════════ */
+#header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 13px 28px;
+  background: var(--header-bg);
+  border-bottom: 3px solid var(--green);
+  font-family: var(--mono);
+  font-size: 14px;
+}
+
+#header .logo {
+  font-size: 18px;
+  font-weight: 700;
+  color: #4ADE80;           /* bright green on dark header */
+  letter-spacing: 1px;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.badge-branch { background: #3B1F6B; color: #C4B5FD; }
+.badge-hash   { background: #1E3A5F; color: #7DD3FC; }
+.badge-actor  { background: #14532D; color: #86EFAC; }
+
+#header .spacer { flex: 1; }
+
+#global-status {
+  font-size: 15px;
+  font-weight: 800;
+  padding: 5px 18px;
+  border-radius: 7px;
+  transition: all 0.4s;
+  min-width: 145px;
+  text-align: center;
+  font-family: var(--sans);
+  letter-spacing: 0.3px;
+}
+.status-idle     { background: #334155; color: #94A3B8; }
+.status-running  { background: var(--amber-dim); color: var(--amber-txt); border: 2px solid var(--amber); }
+.status-fail     { background: var(--red-dim);   color: var(--red-txt);   border: 2px solid var(--red);
+                   animation: pulse-red 0.6s infinite; }
+.status-pass     { background: var(--green-dim); color: var(--green-txt); border: 2px solid var(--green); }
+.status-deployed { background: var(--sky-dim);   color: var(--sky-txt);   border: 2px solid var(--sky); }
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.55; }
+}
+
+#speed-info {
+  font-size: 13px;
+  color: #94A3B8;
+  margin-left: 4px;
+}
+#elapsed-display {
+  font-size: 14px !important;
+  color: #94A3B8 !important;
+}
+
+/* ═══════════ PIPELINE TRACK ═══════════ */
+#pipeline-wrap {
+  padding: 20px 28px 0;
+}
+
+#pipeline {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+}
+
+/* Connector */
+.connector {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  max-width: 26px;
+}
+.connector-line {
+  height: 3px;
+  width: 100%;
+  background: var(--border);
+  position: relative;
+  transition: background 0.4s;
+  border-radius: 2px;
+}
+.connector-line.active { background: var(--green); }
+.connector-arrow {
+  position: absolute;
+  right: -6px;
+  top: -5px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid var(--border);
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  transition: border-left-color 0.4s;
+}
+.connector-line.active .connector-arrow { border-left-color: var(--green); }
+
+/* Stage card */
+.stage {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  transition: border-color 0.35s, box-shadow 0.35s, background 0.35s;
+  position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+.stage.pending  { opacity: 0.40; }
+.stage.running  {
+  border-color: var(--amber);
+  background: #FFFBEB;
+  box-shadow: 0 0 0 3px rgba(217,119,6,0.15), 0 2px 8px rgba(0,0,0,0.10);
+  opacity: 1;
+}
+.stage.pass     {
+  border-color: var(--green);
+  background: #F0FDF4;
+  box-shadow: 0 0 0 3px rgba(22,163,74,0.12), 0 2px 8px rgba(0,0,0,0.08);
+  opacity: 1;
+}
+.stage.fail     {
+  border-color: var(--red);
+  background: #FFF5F5;
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.18), 0 2px 10px rgba(0,0,0,0.12);
+  opacity: 1;
+  animation: shake 0.45s;
+}
+.stage.fixed    {
+  border-color: var(--sky);
+  background: #F0F9FF;
+  box-shadow: 0 0 0 3px rgba(3,105,161,0.12), 0 2px 8px rgba(0,0,0,0.08);
+  opacity: 1;
+}
+
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-5px)} 40%{transform:translateX(5px)}
+  60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+}
+
+.stage-num {
+  position: absolute;
+  top: 7px; left: 9px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.stage-icon {
+  font-size: 26px;
+  line-height: 1;
+  margin-top: 2px;
+  transition: transform 0.3s;
+}
+.stage.running .stage-icon { animation: spin 1.2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.stage-name {
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.25;
+  letter-spacing: 0px;
+  color: var(--text);
+}
+
+.stage-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.stage-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 5px;
+  letter-spacing: 0.4px;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+}
+.sb-idle    { background: var(--surface2); color: var(--muted); }
+.sb-running { background: var(--amber-dim); color: var(--amber-txt); }
+.sb-pass    { background: var(--green-dim); color: var(--green-txt); }
+.sb-fail    { background: var(--red-dim);   color: var(--red-txt); }
+.sb-fixed   { background: var(--sky-dim);   color: var(--sky-txt); }
+
+/* Progress bar */
+.stage-progress {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.stage-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  transition: width linear;
+  background: var(--amber);
+}
+.stage.pass  .stage-progress-fill { background: var(--green); width: 100% !important; }
+.stage.fail  .stage-progress-fill { background: var(--red);   width: 100% !important; }
+.stage.fixed .stage-progress-fill { background: var(--sky);   width: 100% !important; }
+
+/* ═══════════ REMEDIATION BANNER ═══════════ */
+#remediation-banner {
+  margin: 12px 28px 0;
+  padding: 11px 18px;
+  background: var(--red-dim);
+  border: 2px solid var(--red);
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--red-txt);
+  display: none;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.4s, border-color 0.4s, color 0.4s;
+}
+#remediation-banner.visible { display: flex; }
+#remediation-banner.fixing {
+  background: var(--sky-dim);
+  border-color: var(--sky);
+  color: var(--sky-txt);
+}
+#remediation-banner.fixed-ok {
+  background: var(--green-dim);
+  border-color: var(--green);
+  color: var(--green-txt);
+}
+
+/* ═══════════ TWIN PANELS ═══════════ */
+#panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 14px 28px 0;
+  height: 228px;
+}
+
+/* Log panel */
+#log-panel {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+#log-panel .panel-title {
+  padding: 7px 14px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+  border-bottom: 1.5px solid var(--border);
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  letter-spacing: 0.1px;
+}
+#log-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.65;
+  scroll-behavior: smooth;
+  background: #FAFCFF;
+}
+#log-body::-webkit-scrollbar { width: 5px; }
+#log-body::-webkit-scrollbar-track { background: var(--surface2); }
+#log-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.log-line { margin-bottom: 1px; }
+.log-ts    { color: #94A3B8; }
+.log-key   { color: #0369A1; font-weight: 600; }
+.log-val-ok  { color: #15803D; font-weight: 600; }
+.log-val-warn{ color: #B45309; font-weight: 600; }
+.log-val-err { color: #B91C1C; font-weight: 700; }
+.log-val-info{ color: #334155; }
+
+/* Metrics panel */
+#metrics-panel {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+#metrics-panel .panel-title {
+  padding: 7px 14px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sky);
+  border-bottom: 1.5px solid var(--border);
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+#metrics-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.metric-card {
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.metric-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  font-family: var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.metric-val {
+  font-family: var(--mono);
+  font-size: 24px;
+  font-weight: 800;
+  transition: color 0.4s;
+  color: var(--muted);
+}
+.metric-sub {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+/* ═══════════ BOTTOM TICKER ═══════════ */
+#ticker {
+  margin: 11px 28px 0;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+#ticker-msg { color: var(--text); transition: color 0.3s; font-weight: 600; }
+
+/* Replay button */
+#replay-btn {
+  position: fixed;
+  bottom: 20px; right: 28px;
+  background: var(--violet);
+  color: #fff;
+  border: none;
+  padding: 11px 26px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  display: none;
+  font-family: var(--sans);
+  letter-spacing: 0.4px;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+  transition: opacity 0.3s, transform 0.2s;
+}
+#replay-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<div id="header">
+  <div class="logo">⬡ DevSecOps</div>
+  <span class="badge badge-branch">⎇ feature/docker-deploy</span>
+  <span class="badge badge-hash">commit <span id="hash-display">a3f9c21</span></span>
+  <span class="badge badge-actor">👤 sam@digilians</span>
+  <div class="spacer"></div>
+  <span id="elapsed-display" style="font-size:11px;color:var(--muted)">00:00</span>
+  <span id="speed-info" class="badge badge-hash"></span>
+  <span id="loop-badge" class="badge badge-branch" style="display:none">↺ Run <span id="loop-count">1</span></span>
+  <div id="global-status" class="status-idle">⏸ IDLE</div>
+</div>
+
+<!-- ═══ PIPELINE ═══ -->
+<div id="pipeline-wrap">
+  <div id="pipeline"></div>
+</div>
+
+<!-- ═══ REMEDIATION BANNER ═══ -->
+<div id="remediation-banner">
+  <span id="rem-icon">⛔</span>
+  <span id="rem-text">Security gate blocked — prompt injection payload detected in test suite</span>
+</div>
+
+<!-- ═══ TWIN PANELS ═══ -->
+<div id="panels">
+  <div id="log-panel">
+    <div class="panel-title">
+      <span>▶</span> Pipeline Log — structured JSON
+    </div>
+    <div id="log-body"></div>
+  </div>
+  <div id="metrics-panel">
+    <div class="panel-title">
+      <span>◉</span> Live Metrics
+    </div>
+    <div id="metrics-body">
+      <div class="metric-card">
+        <div class="metric-label">Coverage</div>
+        <div class="metric-val" id="m-coverage" style="color:var(--muted)">—</div>
+        <div class="metric-sub">Target ≥ 80%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">SAST Issues</div>
+        <div class="metric-val" id="m-sast" style="color:var(--muted)">—</div>
+        <div class="metric-sub">bandit -r app/</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Inj. Tests</div>
+        <div class="metric-val" id="m-inj" style="color:var(--muted)">—</div>
+        <div class="metric-sub">Payloads blocked</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Deploy</div>
+        <div class="metric-val" id="m-deploy" style="color:var(--muted)">—</div>
+        <div class="metric-sub">/api/v1/health</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TICKER ═══ -->
+<div id="ticker">
+  <span style="color:var(--green)">◉</span>
+  <span id="ticker-msg">Waiting for push event…</span>
+</div>
+
+<button id="replay-btn" onclick="startSimulation()">↺ Replay</button>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  ★  ANIMATION SPEED CONTROL
+//     Increase to slow down, decrease to speed up.
+//     Affects all stage durations and log emission rates.
+// ════════════════════════════════════════════════════════════════
+const ANIMATION_INTERVAL_MS = 5000;   // ← ADJUST THIS VALUE
+
+// ════════════════════════════════════════════════════════════════
+//  ★  LOOP CONTROL
+//     How many seconds to pause on the "LIVE" final state
+//     before the next run begins.
+// ════════════════════════════════════════════════════════════════
+const LOOP_PAUSE_SEC = 4;   // ← ADJUST THIS VALUE
+
+let loopCount = 0;
+
+// ════════════════════════════════════════════════════════════════
+//  Pipeline stage definitions
+// ════════════════════════════════════════════════════════════════
+const STAGES = [
+  {
+    id: "trigger",
+    icon: "⚡",
+    name: "Trigger",
+    sub: "git push\nmain",
+    durationTicks: 2,
+    willFail: false,
+    logLines: [
+      { ts: true, key: "event",  val: "push",           cls: "log-val-ok" },
+      { ts: true, key: "branch", val: "feature/docker-deploy", cls: "log-val-info" },
+      { ts: true, key: "actor",  val: "sam@digilians",  cls: "log-val-info" },
+      { ts: true, key: "commit", val: "a3f9c21",        cls: "log-val-info" },
+    ]
+  },
+  {
+    id: "checkout",
+    icon: "📦",
+    name: "Checkout",
+    sub: "actions/\ncheckout@v4",
+    durationTicks: 2,
+    willFail: false,
+    logLines: [
+      { ts: true, key: "step",       val: "checkout", cls: "log-val-ok" },
+      { ts: true, key: "python",     val: "3.11",     cls: "log-val-info" },
+      { ts: true, key: "pip_cache",  val: "hit",      cls: "log-val-ok" },
+    ]
+  },
+  {
+    id: "lint",
+    icon: "🔍",
+    name: "Lint + Type",
+    sub: "ruff · mypy",
+    durationTicks: 3,
+    willFail: false,
+    logLines: [
+      { ts: true, key: "tool",    val: "ruff check app/",         cls: "log-val-info" },
+      { ts: true, key: "issues",  val: "0",                        cls: "log-val-ok" },
+      { ts: true, key: "tool",    val: "mypy app/ --strict",       cls: "log-val-info" },
+      { ts: true, key: "errors",  val: "0",                        cls: "log-val-ok" },
+      { ts: true, key: "status",  val: "LINT_PASS",                cls: "log-val-ok" },
+    ]
+  },
+  {
+    id: "tests",
+    icon: "🧪",
+    name: "Unit Tests",
+    sub: "pytest\ncoverage ≥ 80%",
+    durationTicks: 4,
+    willFail: false,
+    logLines: [
+      { ts: true, key: "runner",   val: "pytest tests/unit/",           cls: "log-val-info" },
+      { ts: true, key: "passed",   val: "47",                           cls: "log-val-ok" },
+      { ts: true, key: "failed",   val: "0",                            cls: "log-val-ok" },
+      { ts: true, key: "coverage", val: "83%",                          cls: "log-val-ok" },
+      { ts: true, key: "gate",     val: "coverage >= 80% ✓",            cls: "log-val-ok" },
+      { ts: true, key: "status",   val: "TESTS_PASS",                   cls: "log-val-ok" },
+    ]
+  },
+  {
+    id: "security",
+    icon: "🛡",
+    name: "Security Scan",
+    sub: "bandit · gitleaks\ninj. tests",
+    durationTicks: 4,
+    willFail: true,
+    failAtTick: 2,
+    remediation: {
+      ticks: 5,
+      fixLogLines: [
+        { ts: true, key: "⛔ FAIL",   val: "prompt injection payload survived sanitizer",   cls: "log-val-err" },
+        { ts: true, key: "payload",   val: "ignore previous instructions",                  cls: "log-val-err" },
+        { ts: true, key: "action",    val: "opening hotfix/prompt-injection branch",         cls: "log-val-warn" },
+        { ts: true, key: "patch",     val: "adding pattern to INJECTION_PATTERNS list",      cls: "log-val-warn" },
+        { ts: true, key: "re-test",   val: "pytest tests/security/test_prompt_injection.py", cls: "log-val-info" },
+        { ts: true, key: "payloads",  val: "8/8 blocked ✓",                                 cls: "log-val-ok" },
+        { ts: true, key: "gitleaks",  val: "no secrets found ✓",                            cls: "log-val-ok" },
+        { ts: true, key: "bandit",    val: "0 high-severity issues ✓",                      cls: "log-val-ok" },
+        { ts: true, key: "status",    val: "SECURITY_PASS (after hotfix)",                  cls: "log-val-ok" },
+      ]
+    },
+    logLines: [
+      { ts: true, key: "tool",      val: "bandit -r app/ -ll",          cls: "log-val-info" },
+      { ts: true, key: "tool",      val: "pytest tests/security/",       cls: "log-val-info" },
+    ]
+  },
+  {
+    id: "docker",
+    icon: "🐳",
+    name: "Docker Build",
+    sub: "build · push\nto ECR",
+    durationTicks: 5,
+    willFail: false,
+    logLines: [
+      { ts: true, key: "step",     val: "docker build -t ai-support:a3f9c21 .", cls: "log-val-info" },
+      { ts: true, key: "layer",    val: "FROM python:3.11-slim → cached",        cls: "log-val-ok"  },
+      { ts: true, key: "layer",    val: "RUN pip install → 2m14s",               cls: "log-val-info"},
+      { ts: true, key: "layer",    val: "COPY app/ → done",                      cls: "log-val-ok"  },
+      { ts: true, key: "size",     val: "image 1.23 GB",                          cls: "log-val-info"},
+      { ts: true, key: "push",     val: "ECR: 123456.dkr.ecr.eu-west-1...",      cls: "log-val-info"},
+      { ts: true, key: "status",   val: "DOCKER_PASS",                            cls: "log-val-ok" },
+    ]
+  },
+  {
+    id: "deploy",
+    icon: "☁",
+    name: "Deploy AWS",
+    sub: "EC2 · ALB\nhealth check",
+    durationTicks: 5,
+    willFail: false,
+    logLines: [
+      { ts: true, key: "step",         val: "aws ecs update-service",         cls: "log-val-info" },
+      { ts: true, key: "instance",     val: "EC2 t3.medium pulling image…",   cls: "log-val-info" },
+      { ts: true, key: "container",    val: "ai-support-assistant started",   cls: "log-val-ok"   },
+      { ts: true, key: "alb_check",    val: "GET /api/v1/health → 200 OK",    cls: "log-val-ok"   },
+      { ts: true, key: "llm_provider", val: "local → gemma-4-2b",             cls: "log-val-info" },
+      { ts: true, key: "chromadb",     val: "connected · 247 vectors",        cls: "log-val-ok"   },
+      { ts: true, key: "redis",        val: "connected · ping 0.4ms",         cls: "log-val-ok"   },
+      { ts: true, key: "status",       val: "DEPLOY_SUCCESS",                 cls: "log-val-ok"   },
+    ]
+  },
+  {
+    id: "monitor",
+    icon: "📊",
+    name: "CloudWatch",
+    sub: "logs · metrics\nalerts live",
+    durationTicks: 3,
+    willFail: false,
+    logLines: [
+      { ts: true, key: "log_group",   val: "/ai-support/app",                cls: "log-val-info" },
+      { ts: true, key: "latency_p50", val: "1240ms",                          cls: "log-val-ok"  },
+      { ts: true, key: "cache_hit",   val: "34%",                             cls: "log-val-ok"  },
+      { ts: true, key: "llm_fallback",val: "0 in last 5 min",                 cls: "log-val-ok"  },
+      { ts: true, key: "alarm",       val: "LATENCY_ALARM: OK",               cls: "log-val-ok"  },
+      { ts: true, key: "status",      val: "MONITORING_ACTIVE ✓",             cls: "log-val-ok"  },
+    ]
+  },
+];
+
+// ════════════════════════════════════════════════════════════════
+//  State & DOM
+// ════════════════════════════════════════════════════════════════
+let simTimers = [];
+let elapsedSec = 0;
+let elapsedTimer = null;
+let logSeq = 0;
+
+function clearTimers() {
+  simTimers.forEach(clearTimeout);
+  simTimers = [];
+  if (elapsedTimer) clearInterval(elapsedTimer);
+}
+
+function ts() {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
+}
+
+// ═══ BUILD PIPELINE HTML ═══
+function buildPipeline() {
+  const container = document.getElementById("pipeline");
+  container.innerHTML = "";
+  STAGES.forEach((st, i) => {
+    if (i > 0) {
+      const conn = document.createElement("div");
+      conn.className = "connector";
+      conn.innerHTML = `<div class="connector-line" id="conn-${i}"><div class="connector-arrow"></div></div>`;
+      container.appendChild(conn);
+    }
+    const card = document.createElement("div");
+    card.className = "stage pending";
+    card.id = `stage-${st.id}`;
+    card.innerHTML = `
+      <span class="stage-num">${String(i+1).padStart(2,'0')}</span>
+      <div class="stage-icon">${st.icon}</div>
+      <div class="stage-name">${st.name}</div>
+      <div class="stage-sub">${st.sub.replace(/\n/g,'<br>')}</div>
+      <div class="stage-badge sb-idle" id="badge-${st.id}">PENDING</div>
+      <div class="stage-progress"><div class="stage-progress-fill" id="prog-${st.id}"></div></div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ═══ LOG WRITER ═══
+function emitLog(line) {
+  const body = document.getElementById("log-body");
+  const div = document.createElement("div");
+  div.className = "log-line";
+  if (line.ts) {
+    div.innerHTML = `<span class="log-ts">${ts()}</span> <span class="log-key">"${line.key}"</span>: <span class="${line.cls}">"${line.val}"</span>`;
+  } else {
+    div.innerHTML = `<span style="color:var(--muted)">${line.raw}</span>`;
+  }
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+function emitSeparator(label) {
+  const body = document.getElementById("log-body");
+  const div = document.createElement("div");
+  div.className = "log-line";
+  div.innerHTML = `<span style="color:var(--border)">── ${label} ─────────────────</span>`;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+// ═══ METRIC UPDATERS ═══
+function setMetric(id, val, color) {
+  const el = document.getElementById(id);
+  el.textContent = val;
+  el.style.color = `var(${color})`;
+}
+
+function ticker(msg, color="var(--text)") {
+  const el = document.getElementById("ticker-msg");
+  el.textContent = msg;
+  el.style.color = color;
+}
+
+function setGlobalStatus(cls, label) {
+  const el = document.getElementById("global-status");
+  el.className = cls;
+  el.textContent = label;
+}
+
+// ═══ STAGE RUNNER ═══
+function runStage(stageIdx, onDone) {
+  const st = STAGES[stageIdx];
+  const card = document.getElementById(`stage-${st.id}`);
+  const badge = document.getElementById(`badge-${st.id}`);
+  const prog = document.getElementById(`prog-${st.id}`);
+  const conn = document.getElementById(`conn-${stageIdx}`);
+
+  const I = ANIMATION_INTERVAL_MS;
+
+  // Running
+  card.className = "stage running";
+  badge.className = "stage-badge sb-running";
+  badge.textContent = "RUNNING";
+  setGlobalStatus("status-running", "⚙ RUNNING");
+  ticker(`Running: ${st.name}…`, "var(--amber)");
+  emitSeparator(`STAGE ${stageIdx+1}: ${st.name.toUpperCase()}`);
+
+  // Emit logs progressively
+  const totalDur = st.durationTicks * I;
+  const failAt   = st.willFail ? (st.failAtTick || 2) * I : Infinity;
+
+  let logIdx = 0;
+  const logInterval = Math.min(I * 0.8, totalDur / (st.logLines.length + 1));
+
+  function emitNextLog() {
+    if (logIdx < st.logLines.length) {
+      if (st.willFail && logIdx * logInterval >= failAt) return; // stop before fail
+      emitLog(st.logLines[logIdx++]);
+      simTimers.push(setTimeout(emitNextLog, logInterval));
+    }
+  }
+  simTimers.push(setTimeout(emitNextLog, logInterval * 0.5));
+
+  // Animate progress bar
+  const tickInterval = totalDur / 100;
+  let pct = 0;
+  function advanceProg() {
+    pct = Math.min(pct + 1, st.willFail ? st.failAtTick * 100 / st.durationTicks : 100);
+    prog.style.width = pct + "%";
+    prog.style.transitionDuration = (tickInterval * 0.9) + "ms";
+    if (pct < (st.willFail ? st.failAtTick * 100 / st.durationTicks : 100)) {
+      simTimers.push(setTimeout(advanceProg, tickInterval));
+    }
+  }
+  advanceProg();
+
+  if (st.willFail) {
+    simTimers.push(setTimeout(() => {
+      // FAIL state
+      card.className = "stage fail";
+      badge.className = "stage-badge sb-fail";
+      badge.textContent = "FAIL";
+      prog.style.background = "var(--red)";
+      setGlobalStatus("status-fail", "⛔ BLOCKED");
+      ticker(`BLOCKED: ${st.name} — security gate failed`, "var(--red)");
+
+      const banner = document.getElementById("remediation-banner");
+      banner.className = "visible";
+
+      // Emit fail log
+      emitLog({ ts: true, key: "⛔ FAIL", val: st.name + " blocked", cls: "log-val-err" });
+
+      // Remediation phase
+      simTimers.push(setTimeout(() => {
+        banner.className = "visible fixing";
+        document.getElementById("rem-icon").textContent = "🔧";
+        document.getElementById("rem-text").textContent = "Applying hotfix/prompt-injection patch…";
+        ticker("Applying security patch…", "var(--sky)");
+
+        let fixIdx = 0;
+        const fixLines = st.remediation.fixLogLines;
+        const fixLogInterval = (st.remediation.ticks * I) / (fixLines.length + 1);
+        function emitFix() {
+          if (fixIdx < fixLines.length) {
+            emitLog(fixLines[fixIdx++]);
+            simTimers.push(setTimeout(emitFix, fixLogInterval));
+          }
+        }
+        simTimers.push(setTimeout(emitFix, fixLogInterval * 0.5));
+
+        simTimers.push(setTimeout(() => {
+          // FIXED state
+          card.className = "stage fixed";
+          badge.className = "stage-badge sb-fixed";
+          badge.textContent = "FIXED ✓";
+          prog.style.background = "var(--sky)";
+          prog.style.width = "100%";
+          banner.className = "visible fixed-ok";
+          document.getElementById("rem-icon").textContent = "✅";
+          document.getElementById("rem-text").textContent = "Patch applied · security gate passed · pipeline resumed";
+          setMetric("m-sast", "0", "--green");
+          setMetric("m-inj", "8/8", "--green");
+          if (conn) conn.classList.add("active");
+          if (stageIdx < STAGES.length - 1) {
+            const nextConn = document.getElementById(`conn-${stageIdx+1}`);
+            if (nextConn) nextConn.classList.add("active");
+          }
+          simTimers.push(setTimeout(() => {
+            banner.className = "";
+            onDone();
+          }, I * 1.2));
+        }, st.remediation.ticks * I));
+      }, I * 1.5));
+    }, failAt));
+  } else {
+    // Normal pass
+    simTimers.push(setTimeout(() => {
+      card.className = "stage pass";
+      badge.className = "stage-badge sb-pass";
+      badge.textContent = "PASS ✓";
+      if (conn) conn.classList.add("active");
+
+      // Stage-specific metric updates
+      if (st.id === "tests") {
+        setMetric("m-coverage", "83%", "--green");
+      }
+      if (st.id === "deploy") {
+        setMetric("m-deploy", "200 OK", "--green");
+      }
+      if (st.id === "monitor") {
+        setGlobalStatus("status-deployed", "✓ LIVE");
+        ticker("Pipeline complete — AI Customer Support Assistant is LIVE on AWS ✓", "var(--green)");
+        document.getElementById("replay-btn").style.display = "none";
+
+        // ── AUTO-LOOP: count down then restart ──
+        const pause = LOOP_PAUSE_SEC * 1000;
+        const countStep = 500;
+        let remaining = LOOP_PAUSE_SEC;
+        function countDown() {
+          if (remaining > 0) {
+            ticker(`✓ LIVE — restarting in ${remaining}s…`, "var(--green)");
+            remaining--;
+            simTimers.push(setTimeout(countDown, countStep * 2));
+          } else {
+            ticker("↺ Restarting pipeline…", "#7C3AED");
+            simTimers.push(setTimeout(startSimulation, 600));
+          }
+        }
+        simTimers.push(setTimeout(countDown, pause * 0.25));
+      }
+      if (conn) conn.classList.add("active");
+      simTimers.push(setTimeout(() => {
+        if (stageIdx < STAGES.length - 1) {
+          const nextConn = document.getElementById(`conn-${stageIdx+1}`);
+          if (nextConn) nextConn.classList.add("active");
+        }
+        onDone();
+      }, I * 0.4));
+    }, totalDur));
+  }
+}
+
+// ═══ CHAIN STAGES ═══
+function runStages(idx) {
+  if (idx >= STAGES.length) return;
+  runStage(idx, () => {
+    simTimers.push(setTimeout(() => runStages(idx + 1), ANIMATION_INTERVAL_MS * 0.6));
+  });
+}
+
+// ═══ MAIN ENTRY ═══
+function startSimulation() {
+  clearTimers();
+  elapsedSec = 0;
+  logSeq = 0;
+  loopCount++;
+
+  // Show / update loop badge
+  const loopBadge = document.getElementById("loop-badge");
+  loopBadge.style.display = "inline-flex";
+  document.getElementById("loop-count").textContent = loopCount;
+
+  // Reset DOM
+  buildPipeline();
+  document.getElementById("log-body").innerHTML = "";
+  document.getElementById("remediation-banner").className = "";
+  document.getElementById("replay-btn").style.display = "none";
+  setGlobalStatus("status-idle", "⏸ IDLE");
+  ticker("Waiting for push event…");
+  ["m-coverage","m-sast","m-inj","m-deploy"].forEach(id => {
+    setMetric(id, "—", "--muted");
+  });
+  document.getElementById("elapsed-display").textContent = "00:00";
+  document.getElementById("speed-info").textContent =
+    `${ANIMATION_INTERVAL_MS}ms/tick`;
+
+  // SAST starts at N/A
+  setMetric("m-sast", "scan…", "--amber");
+
+  // Elapsed timer
+  elapsedTimer = setInterval(() => {
+    elapsedSec++;
+    const m = String(Math.floor(elapsedSec/60)).padStart(2,'0');
+    const s = String(elapsedSec%60).padStart(2,'0');
+    document.getElementById("elapsed-display").textContent = `${m}:${s}`;
+  }, 1000);
+
+  // Boot log
+  emitLog({ ts: false, raw: "╔══════════════════════════════════════════╗" });
+  emitLog({ ts: false, raw: "║  AI Customer Support Assistant — CI/CD   ║" });
+  emitLog({ ts: false, raw: "║  DevSecOps Pipeline  ·  DIGILIANs W2     ║" });
+  emitLog({ ts: false, raw: "╚══════════════════════════════════════════╝" });
+
+  simTimers.push(setTimeout(() => runStages(0), ANIMATION_INTERVAL_MS * 0.8));
+}
+
+// Auto-start on load
+window.addEventListener("DOMContentLoaded", startSimulation);
+</script>
+</body>
+</html>
